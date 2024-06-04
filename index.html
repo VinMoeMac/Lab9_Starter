@@ -69,25 +69,46 @@
     </form>
 
     <section id="error-btns">
-      <button>Console Log</button>
-      <button>Console Error</button>
-      <button>Console Count</button>
-      <button>Console Warn</button>
-      <button>Console Assert</button>
-      <button>Console Clear</button>
-      <button>Console Dir</button>
-      <button>Console dirxml</button>
-      <button>Console Group Start</button>
-      <button>Console Group End</button>
-      <button>Console Table</button>
-      <button>Start Timer</button>
-      <button>End Timer</button>
-      <button>Console Trace</button>
-      <button>Trigger a Global Error</button>
+      <button id="log">Console Log</button>
+      <button id="error">Console Error</button>
+      <button id="count">Console Count</button>
+      <button id="warn">Console Warn</button>
+      <button id="assert">Console Assert</button>
+      <button id="clear">Console Clear</button>
+      <button id="dir">Console Dir</button>
+      <button id="dirxml">Console dirxml</button>
+      <button id="groupStart">Console Group Start</button>
+      <button id="groupEnd">Console Group End</button>
+      <button id="table">Console Table</button>
+      <button id="startTimer">Start Timer</button>
+      <button id="endTimer">End Timer</button>
+      <button id="trace">Console Trace</button>
+      <button id="globalError">Trigger a Global Error</button>
     </section>
   </main>
 
+  <script src="https://cdn.trackjs.com/agent/v3/latest/t.js"></script>
   <script>
+    window.TrackJS && TrackJS.install({ 
+      token: "7f7a41738d8e43c4909aa830db315e9c"
+    // for more configuration options, see https://docs.trackjs.com
+    });
+  </script>
+                        
+  <script>
+    class CalculatorError extends Error {
+      constructor(message) {
+        super(message);
+        this.name = 'CalculatorError';
+      }
+    }
+    window.onerror = function (message, source, lineno, colno, error) {
+      console.error(`Error caught: ${message} at ${source}:${lineno}:${colno}`);
+      // TrackJS automatically catches and reports errors, no need to send manually
+      return true; // Prevents the default error handling
+    };
+
+
     let form = document.querySelector('form');
     form.addEventListener('submit', e => {
       e.preventDefault();
@@ -95,13 +116,96 @@
       let firstNum = document.querySelector('#first-num').value;
       let secondNum = document.querySelector('#second-num').value;
       let operator = document.querySelector('#operator').value;
-      output.innerHTML = eval(`${firstNum} ${operator} ${secondNum}`);
+
+      try {
+        if (isNaN(firstNum) || isNaN(secondNum)) {
+          throw new CalculatorError('Invalid input: Please enter numbers only.');
+        }
+        let result = eval(`${firstNum} ${operator} ${secondNum}`);
+        if (result === Infinity) {
+          throw new CalculatorError('Division by zero error.');
+        }
+        output.innerHTML = result;
+      } catch (error) {
+        if (error instanceof CalculatorError) {
+          output.innerHTML = error.message;
+          console.error(`${error.name}: ${error.message}`);
+        } else {
+          output.innerHTML = 'An unexpected error occurred.';
+          console.error('Unexpected error:', error);
+        }
+      } finally {
+        console.log('Calculation attempt completed.');
+      }
     });
+
 
     let errorBtns = Array.from(document.querySelectorAll('#error-btns > button'));
 
     // Start your code here
     // You may move this JS to another file if you wish
+    //Now for each of the buttons in the starter code (except for the "Trigger a Global Error" button) give functionality to them that correspond to each of the `console` methods we listed previously (console.log, console.error, console.table, console.dir, console.dirxml, console.group (includes related functions to use properly), console.time / console.timeEnd,  and console.trace.).   The idea being is you press a button that says "Console Log Demo" and it performs that method on some data in your example.
+    errorBtns.forEach(btn => {
+      btn.addEventListener('click', e => {
+        try {
+          switch (e.target.id) {
+            case 'log':
+              console.log('Console Log button clicked');
+              break;
+            case 'error':
+              console.error('Console Error button clicked');
+              break;
+            case 'count':
+              console.count('Count button clicked');
+              break;
+            case 'warn':
+              console.warn('Console Warn button clicked');
+              break;
+            case 'assert':
+              console.assert(false, 'Console Assert button clicked - Assertion failed');
+              break;
+            case 'clear':
+              console.clear();
+              break;
+            case 'dir':
+              console.dir(document.body);
+              break;
+            case 'dirxml':
+              console.dirxml(document);
+              break;
+            case 'groupStart':
+              console.group('Console Group');
+              console.log('Inside group');
+              break;
+            case 'groupEnd':
+              console.groupEnd();
+              break;
+            case 'table':
+              console.table([{ name: 'Alice', age: 30 }, { name: 'Bob', age: 25 }]);
+              break;
+            case 'startTimer':
+              console.time('Timer');
+              break;
+            case 'endTimer':
+              console.timeEnd('Timer');
+              break;
+            case 'trace':
+              console.trace('Console Trace button clicked');
+              break;
+            case 'globalError':
+              // Simulating an error by removing an essential DOM element
+              document.querySelector('output').remove();
+              break;
+            default:
+              throw new Error('Unknown button action');
+          }
+        } catch (error) {
+          console.error(`Error encountered: ${error.message}`);
+        } finally {
+          console.log(`Button with id ${e.target.id} was clicked.`);
+        }
+      });
+    });
   </script>
 </body>
 
